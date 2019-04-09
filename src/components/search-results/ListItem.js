@@ -9,7 +9,7 @@ const ListItem = ({title, cover, description, link}) => (
     <li className={styles.listItem__wrapper}>
 
         <a href={ link } target="_blank" rel="noopener noreferrer">
-            <img src={cover} alt={title} className={styles.listItem__image} />
+            <img src={ cover.thumbnail || noCover } alt={title} className={styles.listItem__image} />
         </a>
 
         <div className={ styles.listItem__textWrapper }>
@@ -26,7 +26,10 @@ const ListItem = ({title, cover, description, link}) => (
 
 ListItem.propTypes = {
     title: PropTypes.string.isRequired,
-    cover: PropTypes.string,
+    cover: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.object
+    ]),
     description: PropTypes.string,
     link: PropTypes.string
 };

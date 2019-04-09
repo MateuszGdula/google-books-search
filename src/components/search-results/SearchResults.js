@@ -12,21 +12,14 @@ const SearchResults = () => (
                 (
                     <ul>
                         {
-                        context.books.map((
-                            { id, 
-                            volumeInfo: { title, description, readingModes, imageLinks, infoLink }
-                            }, index) =>(
+                        context.books.map(({ id, volumeInfo }, index) =>(
 
                             <ListItem 
                                 key={ id + index.toString() }
-                                title={ title }
-                                cover={ readingModes.image ? 
-                                            ( "thumbnail" in imageLinks ? 
-                                                imageLinks.thumbnail : 
-                                                imageLinks.smallThumbnail)
-                                            : undefined }
-                                description={ description }
-                                link={ infoLink }
+                                title={ volumeInfo.title }
+                                cover={ volumeInfo.imageLinks }
+                                description={ volumeInfo.description }
+                                link={ volumeInfo.infoLink }
                             />
 
                         ))}
