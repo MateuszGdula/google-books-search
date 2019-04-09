@@ -115,8 +115,6 @@ class App extends React.Component {
   componentDidMount(){
     {/* get more data if window is scrolled to bottom */}
     window.addEventListener("scroll", () => {
-        console.log(Math.round(window.innerHeight + window.scrollY) +1);
-        console.log(document.body.offsetHeight);
         (Math.floor(window.innerHeight + window.scrollY) + 1) >= document.body.offsetHeight && this.getMoreData();
     }, false);
   };
