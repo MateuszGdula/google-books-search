@@ -5,48 +5,47 @@ import Axios from 'axios'
 import Form from './components/form/Form'
 import SearchResults from  './components/search-results/SearchResults'
 
-const initState = {
+const getInitialState = () => ({
   books: [],
-  request: "",
+  requestString: "",
   isLoading: false,
-  numberOfBooks: 0,
-  infoText: "",
-  errorText: ""
-}
+  totalBooksNumber: 0,
+  infoText: ""
+});
 
 class App extends React.Component {
 
   state = {
-    ...initState
+    ...getInitialState()
   }
 
-  
-  buildQueryString = (e) => {
-    {/* reset state and send new request when form parametrs is changed */}
+  buildRequestString = (e) => {
+    {/* reset state on new user inputs, build new request string and use it to get data from API */}
     e.preventDefault();
+    this.setState(getInitialState());
 
-    this.setState(initState);
-
-    const q = `&q=${encodeURIComponent(document.querySelector("input[type=text]").value)}`;
+    const endPoint = `https://www.googleapis.com/books/v1/volumes`;
+    const userText = `&q=${encodeURIComponent(document.querySelector("input[type=text]").value)}`;
     const orderBy = `&orderBy=${document.querySelector("input[type=radio]:checked").value}`;
-    const queryString = `https://www.googleapis.com/books/v1/volumes?maxResults=10${q}${orderBy}`
 
-    {/* save queryString to state and send request */}
-
+    const requestString = `${endPoint}?maxResults=10${userText}${orderBy}`
+    
     this.setState({
-      isLoading: true,
-      request: queryString
+      requestString
     })
 
-    this.sendRequest(queryString)
-    
+    this.sendRequest(requestString)
   }
 
 
-  sendRequest = (request) => {
-  {/* send async request and set app state based on response, resend request on error */}
+  sendRequest = (requestString) => {
+  {/* send request by Axios and update the App state */}
 
-  Axios.get(request)
+  this.setState({
+    isLoading: true
+  });
+
+  Axios.get(requestString)
     .then(res => {
       
       if("items" in res.data){
@@ -54,8 +53,7 @@ class App extends React.Component {
         this.setState(prevState => ({
           books: [...prevState.books, ...res.data.items],
           isLoading: false,
-          numberOfBooks: res.data.totalItems,
-          infoText: `${res.data.totalItems} results found`
+          totalBooksNumber: prevState.totalBooksNumber === 0 ? res.data.totalItems : prevState.totalBooksNumber,
         }));
 
       } else {
@@ -70,35 +68,34 @@ class App extends React.Component {
     .catch( error => {
  
       this.setState({
-        errorText: `Error: ${error.message}`
+        isLoading: false,
+        infoText: `Error on loading data.`
       })
 
-      setTimeout(() => {
-        this.sendRequest(request)
-      }, 1000);
-      
     })
   }
 
   getMoreData = () => {
-    {/* return if there are no more books in google library or on waiting for response */}
-    if(this.state.numberOfBooks === this.state.books.length || this.state.isLoading) return;
+    {/* get more data only if scroll possition is on the page bottom */}
+    if(! ((Math.floor(window.innerHeight + window.scrollY) + 1) >= document.body.offsetHeight) ) return;
 
-    {/* add start index to query bades on books array lenght */}
-    const request = `${this.state.request}&startIndex=${this.state.books.length}`;
+    {/* return if app get all books from google API, on waiting for response, on empty request string or on info text for */}
+    if(this.state.totalBooksNumber === this.state.books.length ||
+        this.state.isLoading ||
+        this.state.requestString === "" ||
+        this.state.infoText !== "") return;
 
-    this.setState({
-      isLoading: true
-    })
+    {/* build request string for next 10 books in google API */}
+    const requestString = `${this.state.requestString}&startIndex=${this.state.books.length}`;
 
-    this.sendRequest(request);
+    this.sendRequest(requestString);
   }
 
   render() {
-
+    {/* pass App state and buildRequestString method to AppContext */}
     const contextElements = {
       ...this.state,
-      buildQueryString: this.buildQueryString
+      buildRequestString: this.buildRequestString
     }
     
     return (
@@ -113,11 +110,12 @@ class App extends React.Component {
   };
 
   componentDidMount(){
-    {/* get more data if window is scrolled to bottom */}
-    window.addEventListener("scroll", () => {
-        (Math.floor(window.innerHeight + window.scrollY) + 1) >= document.body.offsetHeight && this.getMoreData();
-    }, false);
+    window.addEventListener("scroll", this.getMoreData, false);
   };
+
+  componentWillUnmount() {
+    window.removeEventListener("scroll", this.getMoreData);
+  }
 
 }
 

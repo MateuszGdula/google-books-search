@@ -10,7 +10,7 @@ const Form = () => (
     <AppContext.Consumer>
         {(context) => (
 
-        <form className={styles.form} onSubmit={ context.buildQueryString }>
+        <form className={styles.form} onSubmit={ context.buildRequestString }>
 
             <div className="input-group">
                 <span className="input-group-addon">Book title:</span>
